@@ -1,22 +1,23 @@
-/* * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * *
  * Simple Multithreading in Unity
  * callym 2015
  * * * * * * * * * * * * * * * * * * * * * *
  * Add this as a component on your object
  * 
  * TODO:
- * * try making a ThreadTaskPool so you don't can use this outside of a gameobject?
+ * * optimise...
  * * * * * * * * * * * * * * * * * * * * * */
 
 using UnityEngine;
 using System;
-using System.Threading;
 using System.Collections;
 
 public class ThreadTask : MonoBehaviour
 {
 	delegate object ThreadTaskObject(object o);
 	ThreadTaskObject t;
+	Func<object, object> calculate;
+	object input;
 	object results;
 	Action<object> callback;
 
@@ -54,10 +55,17 @@ public class ThreadTask : MonoBehaviour
 	public void StartTask(Func<object, object> calculate, Action<object> callback, object o = null)
 	{
 		t = new ThreadTaskObject(calculate);
+		this.calculate = calculate;
 		this.callback = callback;
-		t.BeginInvoke(o, new AsyncCallback(ThreadCallback), t);
+		this.input = o;
 
-		StartCoroutine(WaitForCallback());
+		ThreadTaskPool.QueueTask(this);
+	}
+
+	public void RunTask()
+	{
+		results = calculate(input);
+		IsDone = true;
 	}
 
 	public IEnumerator WaitForCallback()
@@ -66,13 +74,7 @@ public class ThreadTask : MonoBehaviour
 		{
 			yield return null;
 		}
+		ThreadTaskPool.FinishTask(this);
 		callback(results);
-	}
-
-	void ThreadCallback(IAsyncResult ar)
-	{
-		ThreadTaskObject task = (ThreadTaskObject)ar.AsyncState;
-		results = task.EndInvoke(ar);
-		IsDone = true;
 	}
 }
