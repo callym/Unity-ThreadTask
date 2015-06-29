@@ -14,8 +14,6 @@ using System.Collections;
 
 public class ThreadTask : MonoBehaviour
 {
-	delegate object ThreadTaskObject(object o);
-	ThreadTaskObject t;
 	Func<object, object> calculate;
 	object input;
 	object results;
@@ -54,7 +52,6 @@ public class ThreadTask : MonoBehaviour
 	/// <param name="o">An object that is passed to the calculation function.</param>
 	public void StartTask(Func<object, object> calculate, Action<object> callback, object o = null)
 	{
-		t = new ThreadTaskObject(calculate);
 		this.calculate = calculate;
 		this.callback = callback;
 		this.input = o;
